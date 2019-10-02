@@ -85,15 +85,23 @@ public class Server  {
                 filter = obj.get("value").toString();
             }
         }
+
+        ArrayList<Item> resultList = new ArrayList<>();
+
         //For each loop to look at items in Database &&
-        for(Map.Entry<String,Item>  entry:database.entrySet()){
-             if (database.entrySet().contains(entry) && entry.getKey().contains(filter)){
-                  //if entry contains filter and entry is in database, send response
-                 methodResults.put(filter,entry);
-
+        for (String itemName : database.keySet()) {
+            if (itemName.contains(filter)) {
+                resultList.add(database.get(itemName));
             }
-
         }
+
+        JSONArray jsonArray = new JSONArray();
+        for (Item item : resultList) {
+            jsonArray.add(item);
+        }
+
+
+        methodResults.put("results", jsonResults);
 
 
 
