@@ -87,8 +87,9 @@ public class Server  {
         }
         //For each loop to look at items in Database &&
         for(Map.Entry<String,Item>  entry:database.entrySet()){
-             if (database.entrySet().contains(entry)){
-
+             if (database.entrySet().contains(entry) && entry.getKey().contains(filter)){
+                  //if entry contains filter and entry is in database, send response
+                 methodResults.put(filter,entry);
 
             }
 
