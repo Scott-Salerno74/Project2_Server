@@ -1,4 +1,5 @@
 public class Item {
+
     private double price;
     private String name;
     private int stock;
@@ -7,6 +8,6 @@ public class Item {
         this.name = name;
         this.price = price;
         this.stock = stock;
-
     }
+
 }

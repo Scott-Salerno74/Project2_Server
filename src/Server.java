@@ -19,52 +19,89 @@ import java.util.HashMap;
 import org.json.simple.*;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+
 public class Server  {
+
     private static HashMap<String, Item> database = new HashMap<String, Item>();
     private static int portNum = 5050;
-    /**
-     * Static class to handle multiple clients
-     */
-    private static class clientHandler extends Thread{
-      private HashMap<String,Item> database;
-      private Socket socket;
-      private DataOutputStream output;
-      private DataInputStream input;
-        public clientHandler(HashMap<String,Item> database, Socket socket, DataOutputStream output, DataInputStream input){
-            this.database = database;
-            this.socket = socket;
-            this.output = output;
-            this.input = input;
 
-      }
-      @Override
-        public void run(){
-           while(true){
+    private static final String PARAMETER_TYPE_ISSUE = "PARAMETER_TYPE_ISSUE"; // 1
+    private static final String MISSING_PARAMETER = "MISSING_PARAMETER"; // 2
+    private static final String PRECONDITION_VIOLATION = "PRECONDITION_VIOLATION"; // 3
+    private static final String INVALID_METHOD_NAME = "INVALID_METHOD_NAME"; // 4
 
-           }
-      }
-
-    }
+//    /**
+//     * Static class to handle multiple clients
+//     */
+//    private static class clientHandler extends Thread{
+//      private HashMap<String,Item> database;
+//      private Socket socket;
+//      private DataOutputStream output;
+//      private DataInputStream input;
+//        public clientHandler(HashMap<String,Item> database, Socket socket, DataOutputStream output, DataInputStream input){
+//            this.database = database;
+//            this.socket = socket;
+//            this.output = output;
+//            this.input = input;
+//
+//      }
+//      @Override
+//        public void run(){
+//           while(true){
+//
+//           }
+//      }
+//
+//    }
 
 
 /*
 
  */
     public static JSONObject getItems(JSONObject[] params){
-        return null;
+        JSONObject methodResults = new JSONObject();
+        String filter = "";
+
+        for (JSONObject obj : params) {
+            if (obj.get("name").toString().equals("filter")) {
+                filter = obj.get("value").toString();
+            }
+        }
+
+        /**
+         * - go through database looking for any items that include filter
+         *
+         * - give methodResults two fields: "error" and "results"
+         *      - error is either null or one of the static errors listed above
+         *      - results is what goes in the "return" part of our response, can be null
+         */
+
+
+
+
+        return methodResults;
     }
+
     /*
 
      */
-    public static void purchase(JSONObject[] params){
+    public static JSONObject purchase(JSONObject[] params) {
+        JSONObject methodResults = new JSONObject();
+        String name = "";
+        int count = 0;
 
+        for (JSONObject obj : params) {
+
+        }
     }
+
     /*
 
      */
-    public static  void restock(JSONObject[] params){
+    public static JSONObject restock(JSONObject[] params) {
 
     }
+
 
     public static void main(String[] args) throws UnknownHostException {
        System.out.println("Server is Started, IP Address is: "+ InetAddress.getLocalHost());
@@ -73,16 +110,8 @@ public class Server  {
            HttpContext context = server.createContext("/");
            context.setHandler(Server::handleJson);
            server.start();
-//           while(true){
-//               Socket client = server.accept();
-//               DataInputStream input = new DataInputStream(client.getInputStream());
-//               DataOutputStream output = new DataOutputStream(client.getOutputStream());
-//               clientHandler ch = new clientHandler(database,client,output,input);
-//
-//               ch.start();
-//           }
        } catch (IOException e) {
-           e.printStackTrace();
+           System.out.println(e);
        }
     }
 
@@ -100,42 +129,73 @@ public class Server  {
                JSONObject jsonRequest;
                try{
                    jsonRequest = (JSONObject)parser.parse(request);
-                   int id = (int)jsonRequest.get("id");
+
+                   int id = (int) jsonRequest.get("id");
                    String methodName =  jsonRequest.get("methodName").toString();
                    Double version = (double) jsonRequest.get("version");
-                   JSONObject[] params = (JSONObject[])jsonRequest.get("params");
-                   JSONObject response = null;
-                   switch (methodName){
+                   JSONObject[] params = (JSONObject[]) jsonRequest.get("params");
+
+                   JSONObject methodResults;
+                   // methodResults has to have two fields, error and results, no matter what happens
+
+                   switch (methodName) {
                        case "getItems":
-                           response = getItems(params);
+                           methodResults = getItems(params);
                            break;
                        case "purchase":
-                           purchase(params);
+                           methodResults = purchase(params);
                            break;
                        case "restock":
-                           restock(params);
+                           methodResults = restock(params);
                            break;
+                       default:
+                           methodResults = new JSONObject();
+                           methodResults.put("error", INVALID_METHOD_NAME);
+                           methodResults.put("results", null);
                    }
+
                    //Craft our response
                    JSONObject jsonResponse = new JSONObject();
-                   jsonResponse.put("version",version);
-                   jsonResponse.put("id",id);
-                   jsonResponse.put("status",0);
-                   jsonResponse.put("return",response);
-                   jsonResponse.put("error",400);
+
+                   jsonResponse.put("version", version);
+                   jsonResponse.put("id", id);
+
+
+                   // TODO: add all possible error types as cases in this switch statement
+                   switch (methodResults.get("error").toString()) {
+                       case PARAMETER_TYPE_ISSUE:
+                           jsonResponse.put("status", 1);
+                           jsonResponse.put("error", "Parameter Type Issue");
+                           break;
+                       case MISSING_PARAMETER:
+                           jsonResponse.put("status", 2);
+                           jsonResponse.put("error", "Missing Parameter");
+                           break;
+                       case PRECONDITION_VIOLATION:
+                           jsonResponse.put("status", 3);
+                           jsonResponse.put("error", "Precondition Violation");
+                           break;
+                       case INVALID_METHOD_NAME:
+                           jsonResponse.put("status", 4);
+                           jsonResponse.put("error", "Invalid Method Name");
+                           break;
+                       default:
+                           jsonResponse.put("status", 0);
+                           jsonResponse.put("error", null);
+                   }
+
+                   jsonResponse.put("return", methodResults.get("results"));
+
 
                    //Send a Response
-                   if(response != null){
-                     httpExchange.sendResponseHeaders(200,response.toJSONString().getBytes().length);
-                     OutputStream output = httpExchange.getResponseBody();
-                     output.write(response.toJSONString().getBytes());
-                     output.close();
-                   }
-                   else{
-                       httpExchange.sendResponseHeaders(210,0);
-                   }
+
+                   httpExchange.sendResponseHeaders(200, jsonResponse.toJSONString().getBytes().length);
+                   OutputStream output = httpExchange.getResponseBody();
+                   output.write(jsonResponse.toJSONString().getBytes());
+                   output.close();
+
                } catch (ParseException e) {
-                   e.printStackTrace();
+                   System.out.println(e);
                }
 
 
