@@ -29,6 +29,8 @@ public class Server  {
     private static final String MISSING_PARAMETER = "MISSING_PARAMETER"; // 2
     private static final String PRECONDITION_VIOLATION = "PRECONDITION_VIOLATION"; // 3
     private static final String INVALID_METHOD_NAME = "INVALID_METHOD_NAME"; // 4
+    private static final String INVALID_STOCK = "INVALID_STOCK"; // 5
+
 
 //    /**
 //     * Static class to handle multiple clients
@@ -67,6 +69,15 @@ public class Server  {
                 filter = obj.get("value").toString();
             }
         }
+
+        for(JSONObject obj: database){
+            if(obj.get("name").toString().equals(filter) && obj.get("stock").equals(0)){
+
+            }
+
+        }
+
+
 
         /**
          * - go through database looking for any items that include filter
@@ -182,6 +193,10 @@ public class Server  {
                        default:
                            jsonResponse.put("status", 0);
                            jsonResponse.put("error", null);
+                       break;
+                       case INVALID_STOCK:
+                           jsonResponse.put("status",5);
+                           jsonResponse.put("error","Invalid Stock");
                    }
 
                    jsonResponse.put("return", methodResults.get("results"));
