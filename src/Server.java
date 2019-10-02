@@ -16,6 +16,8 @@ import java.util.HashMap;
 import java.net.*;
 import java.io.*;
 import java.util.HashMap;
+import java.util.Map;
+
 import org.json.simple.*;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -23,6 +25,20 @@ import org.json.simple.parser.ParseException;
 public class Server  {
 
     private static HashMap<String, Item> database = new HashMap<String, Item>();
+
+    public static void setDatabase(HashMap<String, Item> database) {
+        Item helmet = new Item("Helmet",100.00,10);
+        Item shoulder_pads = new Item("Shoulder Pads", 250.00, 20);
+        Item cleats = new Item("Cleats",150.00,15);
+        Item mouth_piece = new Item("Mouth Piece",20.00,100);
+        database.put("Helmet", helmet);
+        database.put("Shoulder Pads", shoulder_pads);
+        database.put("Cleats", cleats);
+        database.put("Mouth Piece", mouth_piece);
+
+
+    }
+
     private static int portNum = 5050;
 
     private static final String PARAMETER_TYPE_ISSUE = "PARAMETER_TYPE_ISSUE"; // 1
@@ -69,9 +85,10 @@ public class Server  {
                 filter = obj.get("value").toString();
             }
         }
+        //For each loop to look at items in Database &&
+        for(Map.Entry<String,Item>  entry:database.entrySet()){
+             if (database.entrySet().contains(entry)){
 
-        for(JSONObject obj: database){
-            if(obj.get("name").toString().equals(filter) && obj.get("stock").equals(0)){
 
             }
 
@@ -116,6 +133,7 @@ public class Server  {
 
     public static void main(String[] args) throws UnknownHostException {
        System.out.println("Server is Started, IP Address is: "+ InetAddress.getLocalHost());
+       setDatabase(database);
        try{
            HttpServer server = HttpServer.create(new InetSocketAddress(portNum),0);
            HttpContext context = server.createContext("/");
