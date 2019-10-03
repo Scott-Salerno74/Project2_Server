@@ -1,0 +1,13 @@
+Project #2
+Distributed Systems
+Kurt Mace and Scott Salerno
+
+
+
+Kurt was responsible for formatting the HTTP response in a consistent and easily expandable way. He set the standard for how each method would return its results (or errors if they occurred) and used this standard to easily send the response. Kurt also wrote most of the getItems() method.
+
+
+Scott was responsible for managing the database for the server, including creating it and maintaining it in a text file. He wrote the loadDatabase() and storeDatabase() methods to allow the server to communicate with the text file for the database. Scott also wrote most of the purchase() and restock() methods.
+
+
+Both Kurt and Scott worked together on writing the Main method, which created the HttpServer object and handled the incoming HTTP requests. We did this using a method called handleJson(), which took care of reading in the request information and calling the appropriate method to handle the request. Then the response was formatted and sent back to the client. Both Kurt and Scott created the error codes for the various situations of errors that could occur, as well as writing the trivial Item class.
