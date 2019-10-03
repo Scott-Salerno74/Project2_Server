@@ -287,8 +287,6 @@ public class Server  {
        System.out.println("Server is Started, IP Address is: "+ InetAddress.getLocalHost());
         //updatedDataBase = loadDataBase();
         updatedDataBase = loadDataBase();
-        int stock1 = updatedDataBase.get("Helmet").getStock();
-        System.out.println(stock1);
        try{
            HttpServer server = HttpServer.create(new InetSocketAddress(portNum),0);
            HttpContext context = server.createContext("/");
