@@ -238,7 +238,7 @@ public class Server  {
                            jsonResponse.put("status", 0);
                            jsonResponse.put("error", null);
                        break;
-                       case INVALID_STOCK:
+                       case INVALID_STOCK: //l
                            jsonResponse.put("status",5);
                            jsonResponse.put("error","Invalid Stock");
                    }
