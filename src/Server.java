@@ -73,48 +73,65 @@ public class Server  {
 //    }
 
 
-/*
 
- */
+    /**
+     * - go through database looking for any items that include filter
+     *
+     * - give methodResults two fields: "error" and "results"
+     *      - error is either null or one of the static errors listed above
+     *      - results is what goes in the "return" part of our response, can be null
+     */
+
     public static JSONObject getItems(JSONObject[] params){
         JSONObject methodResults = new JSONObject();
         String filter = "";
 
+        boolean filterFound = false;
         for (JSONObject obj : params) {
             if (obj.get("name").toString().equals("filter")) {
                 filter = obj.get("value").toString();
+                filterFound = true;
             }
         }
 
-        ArrayList<Item> resultList = new ArrayList<>();
+        if (!filterFound) {
+            methodResults.put("error", MISSING_PARAMETER);
+            methodResults.put("results", null);
+            return methodResults;
+        }
+
+        JSONArray resultList = new JSONArray();
 
         //For each loop to look at items in Database &&
         for (String itemName : database.keySet()) {
             if (itemName.contains(filter)) {
-                resultList.add(database.get(itemName));
+                JSONObject name = new JSONObject();
+                name.put("name", "name");
+                name.put("type", "string");
+                name.put("value", database.get(itemName).getName());
+
+                JSONObject price = new JSONObject();
+                price.put("name", "price");
+                price.put("type", "double");
+                price.put("value", database.get(itemName).getPrice());
+
+                JSONObject stock = new JSONObject();
+                stock.put("name", "stock");
+                stock.put("type", "integer");
+                stock.put("value", database.get(itemName).getStock());
+
+                JSONArray item = new JSONArray();
+                item.add(name);
+                item.add(price);
+                item.add(stock);
+
+                resultList.add(item);
             }
         }
 
-        JSONArray jsonArray = new JSONArray();
-        for (Item item : resultList) {
-            jsonArray.add(item);
-        }
 
-
-        methodResults.put("results", jsonResults);
-
-
-
-        /**
-         * - go through database looking for any items that include filter
-         *
-         * - give methodResults two fields: "error" and "results"
-         *      - error is either null or one of the static errors listed above
-         *      - results is what goes in the "return" part of our response, can be null
-         */
-
-
-
+        methodResults.put("results", resultList);
+        methodResults.put("error", null);
 
         return methodResults;
     }
