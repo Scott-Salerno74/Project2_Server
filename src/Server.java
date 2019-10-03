@@ -265,7 +265,7 @@ public class Server  {
         prop.store(new FileOutputStream("database.properties"), null);
     }
     /**
-     * Load in database
+     * Load in database 6
      * @throws IOException
      */
     public static ConcurrentHashMap loadDataBase () throws IOException {
