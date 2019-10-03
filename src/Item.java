@@ -10,15 +10,20 @@ public class Item {
         this.stock = stock;
     }
 
-    public double getPrice() {
-        return price;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public int getStock() {
+  public int getStock(){
         return stock;
-    }
+  }
+
+  public void setStock(int newStock){
+        stock = newStock;
+  }
+
+  public double getPrice(){
+        return price;
+  }
+  public void setPrice(double price1){
+        price = price1;
+
+  }
+
 }
