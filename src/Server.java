@@ -107,22 +107,22 @@ public class Server  {
         JSONArray resultList = new JSONArray();
 
         //For each loop to look at items in Database &&
-        for (String itemName : database.keySet()) {
+        for (String itemName : updatedDataBase.keySet()) {
             if (itemName.contains(filter)) {
                 JSONObject name = new JSONObject();
                 name.put("name", "name");
                 name.put("type", "string");
-                name.put("value", database.get(itemName).getName());
+                name.put("value", updatedDataBase.get(itemName).getName());
 
                 JSONObject price = new JSONObject();
                 price.put("name", "price");
                 price.put("type", "double");
-                price.put("value", database.get(itemName).getPrice());
+                price.put("value", updatedDataBase.get(itemName).getPrice());
 
                 JSONObject stock = new JSONObject();
                 stock.put("name", "stock");
                 stock.put("type", "integer");
-                stock.put("value", database.get(itemName).getStock());
+                stock.put("value", updatedDataBase.get(itemName).getStock());
 
                 JSONArray item = new JSONArray();
                 item.add(name);
@@ -173,9 +173,9 @@ public class Server  {
             return methodResults;
         }
 
-        for (String itemName : database.keySet()){
+        for (String itemName : updatedDataBase.keySet()){
             if (itemName.equalsIgnoreCase(name)) {
-                tempStock = database.get(itemName).getStock();
+                tempStock = updatedDataBase.get(itemName).getStock();
 
                 if (tempStock < count) {
                     methodResults.put("error", INVALID_STOCK);
@@ -183,8 +183,8 @@ public class Server  {
                     return methodResults;
                 }
                 else {
-                    database.get(itemName).setStock(tempStock - count);
-                    finalPrice = database.get(itemName).getPrice() * count;
+                    updatedDataBase.get(itemName).setStock(tempStock - count);
+                    finalPrice = updatedDataBase.get(itemName).getPrice() * count;
 
                     returnResults.put("name", "cost");
                     returnResults.put("type", "double");
@@ -235,17 +235,17 @@ public class Server  {
             return methodResults;
         }
 
-        if (!database.keySet().contains(name)) {
+        if (!updatedDataBase.keySet().contains(name)) {
             methodResults.put("error", INVALID_ITEM_NAME);
             methodResults.put("results", null);
             return methodResults;
         }
 
-        for (String itemName : database.keySet()) {
+        for (String itemName : updatedDataBase.keySet()) {
             if (itemName.equalsIgnoreCase(name)) {
-                tempStock = database.get(itemName).getStock();
+                tempStock = updatedDataBase.get(itemName).getStock();
                 tempStock += count;
-                database.get(itemName).setStock(tempStock);
+                updatedDataBase.get(itemName).setStock(tempStock);
 
                 methodResults.put("error", null);
                 methodResults.put("results", null);
@@ -286,7 +286,9 @@ public class Server  {
     public static void main(String[] args) throws IOException, ClassNotFoundException {
        System.out.println("Server is Started, IP Address is: "+ InetAddress.getLocalHost());
         //updatedDataBase = loadDataBase();
-        storeDatabase(database);
+        updatedDataBase = loadDataBase();
+        int stock1 = updatedDataBase.get("Helmet").getStock();
+        System.out.println(stock1);
        try{
            HttpServer server = HttpServer.create(new InetSocketAddress(portNum),0);
            HttpContext context = server.createContext("/");
@@ -295,6 +297,8 @@ public class Server  {
        } catch (IOException e) {
            System.out.println(e);
        }
+       //End Program and Store Updated Database
+        storeDatabase(updatedDataBase);
 
     }
 
