@@ -161,7 +161,7 @@ public class Server  {
                 nameFound = true;
             }
             if (obj.get("name").toString().equals("count")) {
-                count = (int) obj.get("value");
+                count = Integer.parseInt(obj.get("value").toString());
                 countFound = true;
             }
         }
@@ -223,7 +223,7 @@ public class Server  {
                 nameFound = true;
             }
             if (obj.get("name").toString().equals("count")) {
-                count = (int) obj.get("value");
+                count =  Integer.parseInt(obj.get("value").toString());
                 countFound = true;
             }
         }
@@ -261,7 +261,7 @@ public class Server  {
      * @throws IOException
      */
     public static void storeDatabase(ConcurrentHashMap<String,Item> database) throws IOException {
-     File file = new File("data");
+     File file = new File("data.txt");
      FileOutputStream out = new FileOutputStream(file);
      ObjectOutputStream os = new ObjectOutputStream(out);
      os.writeObject(database);
@@ -274,7 +274,7 @@ public class Server  {
      */
 
     public static ConcurrentHashMap loadDataBase() throws IOException, ClassNotFoundException {
-      File file = new File("data");
+      File file = new File("data.txt");
       FileInputStream in = new FileInputStream(file);
       ObjectInputStream inS = new ObjectInputStream(in);
       ConcurrentHashMap<String,Item> database = (ConcurrentHashMap<String, Item>) inS.readObject();
@@ -285,10 +285,8 @@ public class Server  {
 
     public static void main(String[] args) throws IOException, ClassNotFoundException {
        System.out.println("Server is Started, IP Address is: "+ InetAddress.getLocalHost());
-        //updatedDataBase = loadDataBase();
         updatedDataBase = loadDataBase();
-        int stock1 = updatedDataBase.get("Helmet").getStock();
-        System.out.println(stock1);
+
        try{
            HttpServer server = HttpServer.create(new InetSocketAddress(portNum),0);
            HttpContext context = server.createContext("/");
@@ -298,9 +296,10 @@ public class Server  {
            System.out.println(e);
        }
        //End Program and Store Updated Database
-        storeDatabase(updatedDataBase);
+//        storeDatabase(updatedDataBase);
 
     }
+
 
     private static void handleJson (HttpExchange httpExchange)  throws IOException {
         String methodType = httpExchange.getRequestMethod();
@@ -313,27 +312,37 @@ public class Server  {
             input.read(bytes);
             String request = new String(bytes);
 
+            System.out.println("request:");
+            System.out.println(request);
+
             JSONObject jsonRequest;
             try {
                 jsonRequest = (JSONObject) parser.parse(request);
 
-                int id = (int) jsonRequest.get("id");
+                Integer id = Integer.parseInt(jsonRequest.get("id").toString());
                 String methodName = jsonRequest.get("methodName").toString();
-                Double version = (double) jsonRequest.get("version");
-                JSONObject[] params = (JSONObject[]) jsonRequest.get("params");
+                Double version = Double.parseDouble(jsonRequest.get("version").toString());
+                JSONArray params = (JSONArray) jsonRequest.get("params");
+
+                Object[] objParams = params.toArray();
+                JSONObject[] jsonParams = new JSONObject[objParams.length];
+
+                for (int i=0; i<objParams.length; i++) {
+                    jsonParams[i] = (JSONObject) parser.parse(objParams[i].toString());
+                }
 
                 JSONObject methodResults;
                 // methodResults has to have two fields, error and results, no matter what happens
 
                 switch (methodName) {
                     case "getItems":
-                        methodResults = getItems(params);
+                        methodResults = getItems(jsonParams);
                         break;
                     case "purchase":
-                        methodResults = purchase(params);
+                        methodResults = purchase(jsonParams);
                         break;
                     case "restock":
-                        methodResults = restock(params);
+                        methodResults = restock(jsonParams);
                         break;
                     default:
                         methodResults = new JSONObject();
@@ -347,43 +356,45 @@ public class Server  {
                 jsonResponse.put("version", version);
                 jsonResponse.put("id", id);
 
-
-                // TODO: add all possible error types as cases in this switch statement
-                switch (methodResults.get("error").toString()) {
-                    case PARAMETER_TYPE_ISSUE:
-                        jsonResponse.put("status", 1);
-                        jsonResponse.put("error", "Parameter Type Issue");
-                        break;
-                    case MISSING_PARAMETER:
-                        jsonResponse.put("status", 2);
-                        jsonResponse.put("error", "Missing Parameter");
-                        break;
-                    case PRECONDITION_VIOLATION:
-                        jsonResponse.put("status", 3);
-                        jsonResponse.put("error", "Precondition Violation");
-                        break;
-                    case INVALID_METHOD_NAME:
-                        jsonResponse.put("status", 4);
-                        jsonResponse.put("error", "Invalid Method Name");
-                        break;
-                    case INVALID_STOCK:
-                        jsonResponse.put("status", 5);
-                        jsonResponse.put("error", "Invalid Stock");
-                        break;
-                    case INVALID_ITEM_NAME:
-                        jsonResponse.put("status", 6);
-                        jsonResponse.put("error", "Invalid Item Name");
-                        break;
-                    default:
-                        jsonResponse.put("status", 0);
-                        jsonResponse.put("error", null);
+                if (methodResults.get("error") == null) {
+                    jsonResponse.put("status", 0);
+                    jsonResponse.put("error", null);
+                }
+                else {
+                    switch (methodResults.get("error").toString()) {
+                        case PARAMETER_TYPE_ISSUE:
+                            jsonResponse.put("status", 1);
+                            jsonResponse.put("error", "Parameter Type Issue");
+                            break;
+                        case MISSING_PARAMETER:
+                            jsonResponse.put("status", 2);
+                            jsonResponse.put("error", "Missing Parameter");
+                            break;
+                        case PRECONDITION_VIOLATION:
+                            jsonResponse.put("status", 3);
+                            jsonResponse.put("error", "Precondition Violation");
+                            break;
+                        case INVALID_METHOD_NAME:
+                            jsonResponse.put("status", 4);
+                            jsonResponse.put("error", "Invalid Method Name");
+                            break;
+                        case INVALID_STOCK:
+                            jsonResponse.put("status", 5);
+                            jsonResponse.put("error", "Invalid Stock");
+                            break;
+                        case INVALID_ITEM_NAME:
+                            jsonResponse.put("status", 6);
+                            jsonResponse.put("error", "Invalid Item Name");
+                            break;
+                        default:
+                            jsonResponse.put("status", 0);
+                            jsonResponse.put("error", null);
+                    }
                 }
 
                 jsonResponse.put("return", methodResults.get("results"));
 
-
                 //Send a Response
-
                 httpExchange.sendResponseHeaders(200, jsonResponse.toJSONString().getBytes().length);
                 OutputStream output = httpExchange.getResponseBody();
                 output.write(jsonResponse.toJSONString().getBytes());
@@ -393,10 +404,8 @@ public class Server  {
                 System.out.println(e);
             }
 
-
+            storeDatabase(updatedDataBase);
         }
-
-
     }
 }
 
