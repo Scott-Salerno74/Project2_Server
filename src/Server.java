@@ -14,7 +14,6 @@ import java.util.*;
  */
 import java.net.*;
 import java.io.*;
-import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.json.simple.*;
@@ -262,7 +261,7 @@ public class Server  {
      * @throws IOException
      */
     public static void storeDatabase(ConcurrentHashMap<String,Item> database) throws IOException {
-     File file = new File("/src/data");
+     File file = new File("data");
      FileOutputStream out = new FileOutputStream(file);
      ObjectOutputStream os = new ObjectOutputStream(out);
      os.writeObject(database);
@@ -275,7 +274,7 @@ public class Server  {
      */
 
     public static ConcurrentHashMap loadDataBase() throws IOException, ClassNotFoundException {
-      File file = new File("src/data");
+      File file = new File("data");
       FileInputStream in = new FileInputStream(file);
       ObjectInputStream inS = new ObjectInputStream(in);
       ConcurrentHashMap<String,Item> database = (ConcurrentHashMap<String, Item>) inS.readObject();
