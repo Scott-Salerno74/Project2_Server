@@ -4,8 +4,7 @@ import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 
 import java.net.http.HttpResponse;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.*;
 
 /**
  * Authors: Scott Salerno & Kurt Mace
@@ -16,7 +15,7 @@ import java.util.HashMap;
 import java.net.*;
 import java.io.*;
 import java.util.HashMap;
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.json.simple.*;
 import org.json.simple.parser.JSONParser;
@@ -46,6 +45,7 @@ public class Server  {
     private static final String PRECONDITION_VIOLATION = "PRECONDITION_VIOLATION"; // 3
     private static final String INVALID_METHOD_NAME = "INVALID_METHOD_NAME"; // 4
     private static final String INVALID_STOCK = "INVALID_STOCK"; // 5
+    private static final String INVALID_ITEM_NAME = "INVALID_ITEM";//6
 
 
 //    /**
@@ -124,21 +124,104 @@ public class Server  {
      */
     public static JSONObject purchase(JSONObject[] params) {
         JSONObject methodResults = new JSONObject();
+        JSONObject returnResults = new JSONObject();
         String name = "";
         int count = 0;
-
+        int tempStock  = 0;
+        double finalPrice =0.0;
         for (JSONObject obj : params) {
+            if (obj.get("name").toString().equals("name")) {
+                name = obj.get("value").toString();
+
+            }
+            if (obj.get("name").toString().equals("count")) {
+                count = (int) obj.get("value");
+            }
+            for(String name2 : database.keySet()){
+                if(name2.contains(name)){
+                    tempStock = database.get(name2).getStock();
+                    if(tempStock < count){
+                        methodResults.put("error",INVALID_STOCK);
+                        methodResults.put("results", null);
+
+                    }
+                    else{
+                        count -= tempStock;
+                        database.get(name2).setStock(count);
+                        finalPrice = database.get(name2).getPrice() * count;
+                        returnResults.put("name","cost");
+                        returnResults.put("type","double");
+                        returnResults.put("value",finalPrice);
+                        methodResults.put("results",returnResults);
+                        methodResults.put("error",null);
+
+                    }
+                }
+            }
+
 
         }
+        return methodResults;
     }
 
     /*
 
      */
     public static JSONObject restock(JSONObject[] params) {
+        JSONObject methodResults = new JSONObject();
+        JSONObject returnResults = new JSONObject();
+        String name = "";
+        int count = 0;
+        int tempStock  = 0;
+        for (JSONObject obj : params) {
+            if (obj.get("name").toString().equals("name")) {
+                name = obj.get("value").toString();
 
+            }
+            if (obj.get("name").toString().equals("count")) {
+                count = (int) obj.get("value");
+            }
+            if(!database.keySet().contains(name))
+            {
+                methodResults.put("error",INVALID_ITEM_NAME);
+                methodResults.put("results",null);
+                return methodResults;
+            }
+            for (String name2 : database.keySet()) {
+                if(name2.contains(name)){
+                    tempStock = database.get(name2).getStock();
+                    tempStock += count;
+                    database.get(name2).setStock(tempStock);
+                    methodResults.put("error",null);
+                    methodResults.put("results",null);
+            }
+        }
+
+         return methodResults;
     }
 
+    /**
+     * Store database to a file
+     * @throws IOException
+     */
+    public static void storeDatabase(ConcurrentHashMap<String,Item> database) throws IOException {
+        Properties prop = new Properties();
+        for(Map.Entry<String,Item> entry: database.entrySet()){
+            prop.put(entry.getKey(),entry.getValue());
+
+        }
+        prop.store(new FileOutputStream("database.properties"),null);
+    }
+    /**
+     * Load in database
+     * @throws IOException
+     */
+    public static ConcurrentHashMap loadDataBase() throws IOException {
+        ConcurrentHashMap<String,Item> data = new ConcurrentHashMap<>();
+        Properties prop = new Properties();
+        prop.load(new FileInputStream("data.properties"));
+        data = new ConcurrentHashMap<String, Item>(prop);
+    }
 
     public static void main(String[] args) throws UnknownHostException {
        System.out.println("Server is Started, IP Address is: "+ InetAddress.getLocalHost());
@@ -224,6 +307,10 @@ public class Server  {
                        case INVALID_STOCK:
                            jsonResponse.put("status",5);
                            jsonResponse.put("error","Invalid Stock");
+                           break;
+                       case INVALID_ITEM_NAME:
+                           jsonResponse.put("status",6);
+                           jsonResponse.put("error", "Invalid Item Name");
                    }
 
                    jsonResponse.put("return", methodResults.get("results"));
