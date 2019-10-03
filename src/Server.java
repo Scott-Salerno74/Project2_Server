@@ -269,7 +269,7 @@ public class Server  {
 
     }
     /**
-     * Load in database 6
+     * Load in database
      * @throws IOException
      */
 
