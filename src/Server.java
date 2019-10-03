@@ -23,7 +23,6 @@ import org.json.simple.parser.ParseException;
 
 public class Server  {
 
-    private static HashMap<String, Item> database = new HashMap<String, Item>();
 
     private static Item helmet = new Item("Helmet",100.00,10);
     private static Item shoulder_pads = new Item("Shoulder Pads", 250.00, 20);
@@ -262,10 +261,6 @@ public class Server  {
      * Store database to a file
      * @throws IOException
      */
-    public static void storeDatabase (ConcurrentHashMap < String, Item > database) throws IOException {
-        Properties prop = new Properties();
-        for (Map.Entry<String, Item> entry : database.entrySet()) {
-            prop.put(entry.getKey(), entry.getValue());
     public static void storeDatabase(ConcurrentHashMap<String,Item> database) throws IOException {
      File file = new File("/src/data");
      FileOutputStream out = new FileOutputStream(file);
@@ -273,22 +268,12 @@ public class Server  {
      os.writeObject(database);
      os.close();
 
-
-
-
-        }
-        prop.store(new FileOutputStream("database.properties"), null);
-
     }
     /**
      * Load in database 6
      * @throws IOException
      */
-    public static ConcurrentHashMap loadDataBase () throws IOException {
-        ConcurrentHashMap<String, Item> data = new ConcurrentHashMap<>();
-        Properties prop = new Properties();
-        prop.load(new FileInputStream("data.properties"));
-        data = new ConcurrentHashMap<String, Item>(prop);
+
     public static ConcurrentHashMap loadDataBase() throws IOException, ClassNotFoundException {
       File file = new File("src/data");
       FileInputStream in = new FileInputStream(file);
@@ -298,17 +283,7 @@ public class Server  {
         return database;
     }
 
-    public static void main (String[]args) throws UnknownHostException {
-        System.out.println("Server is Started, IP Address is: " + InetAddress.getLocalHost());
-        setDatabase(database);
-        try {
-            HttpServer server = HttpServer.create(new InetSocketAddress(portNum), 0);
-            HttpContext context = server.createContext("/");
-            context.setHandler(Server::handleJson);
-            server.start();
-        } catch (IOException e) {
-            System.out.println(e);
-        }
+
     public static void main(String[] args) throws IOException, ClassNotFoundException {
        System.out.println("Server is Started, IP Address is: "+ InetAddress.getLocalHost());
         //updatedDataBase = loadDataBase();
@@ -422,4 +397,4 @@ public class Server  {
     }
 }
 
-}
+
