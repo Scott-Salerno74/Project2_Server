@@ -23,20 +23,24 @@ import org.json.simple.parser.ParseException;
 
 public class Server  {
 
-    private static HashMap<String, Item> database = new HashMap<String, Item>();
 
-    public static void setDatabase(HashMap<String, Item> database) {
-        Item helmet = new Item("Helmet",100.00,10);
-        Item shoulder_pads = new Item("Shoulder Pads", 250.00, 20);
-        Item cleats = new Item("Cleats",150.00,15);
-        Item mouth_piece = new Item("Mouth Piece",20.00,100);
-        database.put("Helmet", helmet);
-        database.put("Shoulder Pads", shoulder_pads);
-        database.put("Cleats", cleats);
-        database.put("Mouth Piece", mouth_piece);
+    private static Item helmet = new Item("Helmet",100.00,10);
+    private static Item shoulder_pads = new Item("Shoulder Pads", 250.00, 20);
+    private static Item cleats = new Item("Cleats",150.00,15);
+    private static Item mouth_piece = new Item("Mouth Piece",20.00,100);
+    private static ConcurrentHashMap<String, Item> database = new ConcurrentHashMap<>(){
+        {
+            put("Helmet",helmet);
+            put("Shoulder Pads",shoulder_pads);
+            put("Cleats",cleats);
+            put("Mouth Piece",mouth_piece);
+        }
 
 
-    }
+    };
+    private static ConcurrentHashMap<String,Item> updatedDataBase = new ConcurrentHashMap<>();
+
+
 
     private static int portNum = 5050;
 
@@ -167,12 +171,12 @@ public class Server  {
     /*
 
      */
-    public static JSONObject restock(JSONObject[] params) {
+    public static JSONObject restock(JSONObject[] params) throws IOException {
         JSONObject methodResults = new JSONObject();
         JSONObject returnResults = new JSONObject();
         String name = "";
         int count = 0;
-        int tempStock  = 0;
+        int tempStock = 0;
         for (JSONObject obj : params) {
             if (obj.get("name").toString().equals("name")) {
                 name = obj.get("value").toString();
@@ -181,51 +185,59 @@ public class Server  {
             if (obj.get("name").toString().equals("count")) {
                 count = (int) obj.get("value");
             }
-            if(!database.keySet().contains(name))
-            {
-                methodResults.put("error",INVALID_ITEM_NAME);
-                methodResults.put("results",null);
+            if (!database.keySet().contains(name)) {
+                methodResults.put("error", INVALID_ITEM_NAME);
+                methodResults.put("results", null);
                 return methodResults;
             }
+        }
             for (String name2 : database.keySet()) {
-                if(name2.contains(name)){
+                if (name2.contains(name)) {
                     tempStock = database.get(name2).getStock();
                     tempStock += count;
                     database.get(name2).setStock(tempStock);
-                    methodResults.put("error",null);
-                    methodResults.put("results",null);
+                    methodResults.put("error", null);
+                    methodResults.put("results", null);
+                }
             }
+
+            return methodResults;
         }
 
-         return methodResults;
-    }
 
     /**
      * Store database to a file
      * @throws IOException
      */
     public static void storeDatabase(ConcurrentHashMap<String,Item> database) throws IOException {
-        Properties prop = new Properties();
-        for(Map.Entry<String,Item> entry: database.entrySet()){
-            prop.put(entry.getKey(),entry.getValue());
+     File file = new File("/src/data");
+     FileOutputStream out = new FileOutputStream(file);
+     ObjectOutputStream os = new ObjectOutputStream(out);
+     os.writeObject(database);
+     os.close();
 
-        }
-        prop.store(new FileOutputStream("database.properties"),null);
+
+
+
+
     }
     /**
      * Load in database
      * @throws IOException
      */
-    public static ConcurrentHashMap loadDataBase() throws IOException {
-        ConcurrentHashMap<String,Item> data = new ConcurrentHashMap<>();
-        Properties prop = new Properties();
-        prop.load(new FileInputStream("data.properties"));
-        data = new ConcurrentHashMap<String, Item>(prop);
+    public static ConcurrentHashMap loadDataBase() throws IOException, ClassNotFoundException {
+      File file = new File("src/data");
+      FileInputStream in = new FileInputStream(file);
+      ObjectInputStream inS = new ObjectInputStream(in);
+      ConcurrentHashMap<String,Item> database = (ConcurrentHashMap<String, Item>) inS.readObject();
+        inS.close();
+        return database;
     }
 
-    public static void main(String[] args) throws UnknownHostException {
+    public static void main(String[] args) throws IOException, ClassNotFoundException {
        System.out.println("Server is Started, IP Address is: "+ InetAddress.getLocalHost());
-       setDatabase(database);
+        //updatedDataBase = loadDataBase();
+        storeDatabase(database);
        try{
            HttpServer server = HttpServer.create(new InetSocketAddress(portNum),0);
            HttpContext context = server.createContext("/");
@@ -234,6 +246,7 @@ public class Server  {
        } catch (IOException e) {
            System.out.println(e);
        }
+
     }
 
     private static void handleJson(HttpExchange httpExchange)  throws IOException{
